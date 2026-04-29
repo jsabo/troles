@@ -44,6 +44,10 @@ func main() {
 		return
 	}
 
+	if tshProfileDir == "" {
+		tshProfileDir = os.Getenv("TELEPORT_HOME")
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
