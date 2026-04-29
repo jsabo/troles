@@ -25,6 +25,19 @@ func Get(ctx context.Context, tc *apiclient.Client, username string) (*Result, e
 		if trace.IsNotFound(err) {
 			return nil, fmt.Errorf("no login state found for %q — has the user logged in since access lists were configured?", username)
 		}
+		if trace.IsAccessDenied(err) {
+			return nil, fmt.Errorf("access denied — your user lacks permission to read user_login_state resources\n\n" +
+				"Create a role granting access and assign it to your user:\n\n" +
+				"  kind: role\n" +
+				"  version: v7\n" +
+				"  metadata:\n" +
+				"    name: troles-access\n" +
+				"  spec:\n" +
+				"    allow:\n" +
+				"      rules:\n" +
+				"        - resources: [user_login_state]\n" +
+				"          verbs: [list, read]")
+		}
 		return nil, fmt.Errorf("getting user login state for %q: %w", username, err)
 	}
 
