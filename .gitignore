@@ -1,0 +1,6 @@
+/troles
+dist/
+*.test
+*.prof
+go.work
+go.work.sum
