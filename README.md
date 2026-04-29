@@ -1,6 +1,6 @@
 # troles
 
-Show a Teleport user's effective roles, including any roles granted by access lists — the information missing from the Teleport web UI's Users page.
+Show a Teleport user's effective roles, including any roles granted by access lists.
 
 ## Install
 
