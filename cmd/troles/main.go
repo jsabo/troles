@@ -31,6 +31,19 @@ func main() {
 		showVersion   bool
 	)
 
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Show a Teleport user's effective roles, including access-list grants.\n")
+		fmt.Fprintf(os.Stderr, "If username is omitted, uses the currently logged-in tsh user.\n\n")
+		fmt.Fprintf(os.Stderr, "Usage: troles [flags] [username]\n\n")
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\ntsh alias:\n")
+		fmt.Fprintf(os.Stderr, "  Add to ~/.tsh/config/config.yaml:\n\n")
+		fmt.Fprintf(os.Stderr, "    aliases:\n")
+		fmt.Fprintf(os.Stderr, "      roles: /usr/local/bin/troles\n\n")
+		fmt.Fprintf(os.Stderr, "  Then: tsh roles [username]\n")
+	}
+
 	flag.StringVar(&proxyAddr, "proxy", "", "Teleport proxy address (default: from active tsh profile)")
 	flag.StringVar(&cluster, "cluster", "", "tsh profile name (proxy host) to use (default: active profile)")
 	flag.StringVar(&tshProfileDir, "tsh-profile-dir", "", "tsh profile directory (default: ~/.tsh)")
