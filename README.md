@@ -69,7 +69,7 @@ Add to `~/.tsh/config/config.yaml`:
 
 ```yaml
 aliases:
-  roles: /usr/local/bin/troles
+  roles: troles
 ```
 
 Then:

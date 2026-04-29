@@ -40,7 +40,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "\ntsh alias:\n")
 		fmt.Fprintf(os.Stderr, "  Add to ~/.tsh/config/config.yaml:\n\n")
 		fmt.Fprintf(os.Stderr, "    aliases:\n")
-		fmt.Fprintf(os.Stderr, "      roles: /usr/local/bin/troles\n\n")
+		fmt.Fprintf(os.Stderr, "      roles: troles\n\n")
 		fmt.Fprintf(os.Stderr, "  Then: tsh roles [username]\n")
 	}
 
