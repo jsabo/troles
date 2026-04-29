@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	apiclient "github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/profile"
@@ -26,6 +27,7 @@ func main() {
 		cluster       string
 		tshProfileDir string
 		format        string
+		verbose       bool
 		showVersion   bool
 	)
 
@@ -33,6 +35,7 @@ func main() {
 	flag.StringVar(&cluster, "cluster", "", "tsh profile name (proxy host) to use (default: active profile)")
 	flag.StringVar(&tshProfileDir, "tsh-profile-dir", "", "tsh profile directory (default: ~/.tsh)")
 	flag.StringVar(&format, "format", "table", "Output format: table|json")
+	flag.BoolVar(&verbose, "verbose", false, "Print full connection error detail")
 	flag.BoolVar(&showVersion, "version", false, "Print version and exit")
 	flag.Parse()
 
@@ -48,15 +51,21 @@ func main() {
 	if username == "" {
 		p, err := profile.FromDir(tshProfileDir, cluster)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: could not detect current user from tsh profile: %v\n", err)
-			fmt.Fprintf(os.Stderr, "usage: troles [flags] [username]\n")
+			fmt.Fprintf(os.Stderr, "error: not logged in — run 'tsh login' first\n")
 			os.Exit(1)
 		}
 		username = p.Username
 	}
 
+	creds := apiclient.LoadProfile(tshProfileDir, cluster)
+
+	if exp, ok := creds.Expiry(); ok && !exp.IsZero() && time.Now().After(exp) {
+		fmt.Fprintf(os.Stderr, "error: tsh credentials expired — run 'tsh login' and try again\n")
+		os.Exit(1)
+	}
+
 	clientCfg := apiclient.Config{
-		Credentials: []apiclient.Credentials{apiclient.LoadProfile(tshProfileDir, cluster)},
+		Credentials: []apiclient.Credentials{creds},
 	}
 	if proxyAddr != "" {
 		clientCfg.Addrs = []string{proxyAddr}
@@ -64,7 +73,10 @@ func main() {
 
 	tc, err := apiclient.New(ctx, clientCfg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: connecting to Teleport: %v\n", err)
+		fmt.Fprintf(os.Stderr, "error: could not connect to Teleport — run 'tsh login' and try again\n")
+		if verbose {
+			fmt.Fprintf(os.Stderr, "\n%v\n", err)
+		}
 		os.Exit(1)
 	}
 	defer tc.Close()

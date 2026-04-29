@@ -61,6 +61,7 @@ Effective roles:
 | `--cluster` | active tsh profile | tsh profile name (proxy host) to use |
 | `--tsh-profile-dir` | `~/.tsh` | tsh profile directory |
 | `--format` | `table` | Output format: `table` or `json` |
+| `--verbose` | — | Print full connection error detail |
 | `--version` | — | Print version and exit |
 
 ## tsh alias
