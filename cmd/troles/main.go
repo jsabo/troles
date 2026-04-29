@@ -98,8 +98,19 @@ func main() {
 			os.Exit(1)
 		}
 	default:
-		result.PrintTable(os.Stdout)
+		result.PrintTable(os.Stdout, isTTY())
 	}
+}
+
+func isTTY() bool {
+	if os.Getenv("NO_COLOR") != "" || os.Getenv("TERM") == "dumb" {
+		return false
+	}
+	fi, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return fi.Mode()&os.ModeCharDevice != 0
 }
 
 func shorten(s string) string {

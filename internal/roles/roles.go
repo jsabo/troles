@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strings"
 
 	apiclient "github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/trace"
@@ -49,20 +48,45 @@ func Get(ctx context.Context, tc *apiclient.Client, username string) (*Result, e
 	}, nil
 }
 
-func (r *Result) PrintTable(w io.Writer) {
-	fmt.Fprintf(w, "User:  %s\n\n", r.User)
+func (r *Result) PrintTable(w io.Writer, color bool) {
+	dim := esc(color, "\033[2m")
+	bold := esc(color, "\033[1m")
+	green := esc(color, "\033[32m")
+	reset := esc(color, "\033[0m")
 
-	fmt.Fprintf(w, "Base roles:\n")
-	printList(w, r.BaseRoles)
+	fmt.Fprintf(w, "%sUser%s  %s%s%s\n\n", dim, reset, bold, r.User, reset)
 
-	fmt.Fprintf(w, "\nAccess list grants:\n")
-	printList(w, r.AccessListRoles)
+	// Column width: widest role name or header, whichever is larger.
+	roleWidth := len("ROLE")
+	for _, role := range r.EffectiveRoles {
+		if len(role) > roleWidth {
+			roleWidth = len(role)
+		}
+	}
 
-	fmt.Fprintf(w, "\nEffective roles:\n")
-	if len(r.EffectiveRoles) == 0 {
-		fmt.Fprintf(w, "  (none)\n")
+	fmt.Fprintf(w, "%s%-*s  SOURCE%s\n", dim, roleWidth, "ROLE", reset)
+
+	alSet := make(map[string]bool, len(r.AccessListRoles))
+	for _, role := range r.AccessListRoles {
+		alSet[role] = true
+	}
+
+	for _, role := range r.EffectiveRoles {
+		if alSet[role] {
+			fmt.Fprintf(w, "%s%-*s  access list%s\n", green, roleWidth, role, reset)
+		} else {
+			fmt.Fprintf(w, "%-*s  base\n", roleWidth, role)
+		}
+	}
+
+	total := len(r.EffectiveRoles)
+	alCount := len(r.AccessListRoles)
+	baseCount := total - alCount
+	fmt.Fprintf(w, "\n")
+	if alCount > 0 {
+		fmt.Fprintf(w, "%s%d roles  (%d base, %d from access lists)%s\n", dim, total, baseCount, alCount, reset)
 	} else {
-		fmt.Fprintf(w, "  %s\n", strings.Join(r.EffectiveRoles, ", "))
+		fmt.Fprintf(w, "%s%d roles%s\n", dim, total, reset)
 	}
 }
 
@@ -72,14 +96,11 @@ func (r *Result) PrintJSON(w io.Writer) error {
 	return enc.Encode(r)
 }
 
-func printList(w io.Writer, roles []string) {
-	if len(roles) == 0 {
-		fmt.Fprintf(w, "  (none)\n")
-		return
+func esc(enabled bool, code string) string {
+	if enabled {
+		return code
 	}
-	for _, role := range roles {
-		fmt.Fprintf(w, "  %s\n", role)
-	}
+	return ""
 }
 
 func sortedCopy(s []string) []string {
